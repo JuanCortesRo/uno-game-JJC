@@ -65,4 +65,11 @@ public class Card {
     public String getColor() {
         return color;
     }
+
+    public boolean isCompatible(Card other) {
+        return this.color.equals(other.getColor()) || this.value == other.getValue();
+    }
+    public void printColor(){
+        System.out.println(getColor()+getValue());
+    }
 }
