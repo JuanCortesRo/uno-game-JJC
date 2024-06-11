@@ -35,8 +35,8 @@ public class ThreadPlayMachine extends Thread {
                     if (currentCard == null || card.isCompatible(currentCard)) {
                         table.addCardOnTheTable(card);
                         tableImageView.setImage(card.getImage());
-                        machinePlayer.removeCard(i); // Eliminar la carta jugada de la mano del jugador usando el índice
-                        currentCard = card; // Actualizar la última carta jugada
+                        machinePlayer.removeCard(i);
+                        currentCard = card; // Update the last card played
                         currentCard.printColor();
                         cardPlayed = true;
                         putCardOnTheTable(card);
@@ -44,9 +44,8 @@ public class ThreadPlayMachine extends Thread {
                     }
                 }
 
-                // Si no se pudo jugar ninguna carta compatible, tomar una carta nueva (opcional)
+                // If no compatible card could be played, take a new card
                 if (!cardPlayed) {
-                    // Lógica para tomar una carta nueva (si es parte de las reglas)
                     System.out.println("La máquina no puede jugar una carta compatible y necesita tomar una nueva carta.");
                 }
 

@@ -87,7 +87,6 @@ public class GameUnoController {
                     card.printColor();
                     printCardsHumanPlayer();
                 } else {
-                    // Mostrar un mensaje o hacer algo si la carta no es compatible
                     System.out.println("No puedes jugar esta carta.");
                 }
             });
