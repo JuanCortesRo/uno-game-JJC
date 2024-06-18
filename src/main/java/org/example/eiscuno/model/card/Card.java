@@ -67,32 +67,12 @@ public class Card {
     }
 
     public boolean isCompatible(Card other) {
-        if (this.color != null && this.value != null) { //numeros
+        if (this.color != null && this.value != null) {
             if (this.color.equals(other.getColor()) || this.value.equals(other.getValue())) {
                 return true;
-            } else {
-                return false;
-            }
-        } else if (this.color != null && this.value == null) {
-            if (other.getValue()==null){
-                if (this.color.equals(other.getColor())){
-                return true;
-                } else {
-                return true;
-                }
-            } else if (other.getValue()!=null) {
-                if (this.color.equals(other.getColor())){
-                    return true;
-                } else {
-                    return false;
-                }
-            }else {
-                return false;
             }
         }
-        else {
-            return false;
-        }
+        return false;
     }
 
     public void setColor(String newColor){

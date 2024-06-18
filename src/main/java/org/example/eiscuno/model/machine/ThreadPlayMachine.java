@@ -10,6 +10,10 @@ import org.example.eiscuno.model.card.Card;
 import org.example.eiscuno.model.player.Player;
 import org.example.eiscuno.model.table.Table;
 
+import javax.net.ssl.SSLContext;
+import java.util.Objects;
+import java.util.Random;
+
 import static org.example.eiscuno.model.unoenum.EISCUnoEnum.CARD_UNO;
 
 public class ThreadPlayMachine extends Thread {
@@ -41,55 +45,50 @@ public class ThreadPlayMachine extends Thread {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
+                System.out.println("- - - - - TURNO MAQUINA - - - - -");
                 // Aquí iría la lógica de colocar la carta
                 boolean cardPlayed = false;
                 for (int i = 0; i < machinePlayer.getCardsPlayer().size(); i++) {
                     Card card = machinePlayer.getCardsPlayer().get(i);
-                    if (currentCard.getValue()==null&&currentCard.getColor()==null){
-                        System.out.println("nada");
-                    } else if (currentCard.getValue()==null&&currentCard.getColor()!=null) {
-                        if (card == null || card.isCompatible(currentCard)){
-                            table.addCardOnTheTable(card);
-                            tableImageView.setImage(card.getImage());
-                            machinePlayer.removeCard(i);
-                            currentCard = card;
-                            changeBackgroundColor(currentCard);
-                            currentCard.printColor();
-                            cardPlayed = true;
-                            putCardOnTheTable(card);
-                            break;
-                        }
-                    } else{
-                        if (card == null || card.isCompatible(currentCard)){
-                            table.addCardOnTheTable(card);
-                            tableImageView.setImage(card.getImage());
-                            machinePlayer.removeCard(i);
-                            currentCard = card;
-                            changeBackgroundColor(currentCard);
-                            currentCard.printColor();
-                            cardPlayed = true;
-                            putCardOnTheTable(card);
+                    if (Objects.equals(card.getValue(), "EAT4")) {
+                        System.out.println("EL ENEMIGO HACE COMER 4 AL JUGADOR");
+                        String newColor = chooseRandomColor();
+                        card.setColor(newColor);
+                        System.out.println("LA MAQUINA CAMBIÓ DE COLOR A " + newColor);
+                        playTheEnemy(card, i);
+                        cardPlayed = true;
+                        break;
+                    }else if (Objects.equals(card.getValue(), "NEWCOLOR")) {
+                        String newColor = chooseRandomColor();
+                        card.setColor(newColor);
+                        System.out.println("LA MAQUINA CAMBIÓ DE COLOR A " + newColor);
+                        playTheEnemy(card, i);
+                        cardPlayed = true;
+                        break;
+                    } else if ((currentCard.getValue()!=null && currentCard.getColor()!=null)) {
+                        if (currentCard.isCompatible(card)){
+                            if (Objects.equals(card.getValue(), "EAT2")) {
+                                playTheEnemy(card, i);
+                                System.out.println("EL ENEMIGO HACE COMER 2 CARTAS AL JUGADOR");
+                                cardPlayed = true;
+                            } else if (Objects.equals(card.getValue(), "REVERSE")) {
+                                playTheEnemy(card, i);
+                                System.out.println("EN EL JUEGO CAMBIA DE SENTIDO");
+                                cardPlayed = true;
+                            } else if (Objects.equals(card.getValue(), "SKIP")) {
+                                playTheEnemy(card, i);
+                                System.out.println("EL ENEMIGO HACE PERDER TURNO AL JUGADOR");
+                                cardPlayed = true;
+                            } else {
+                                playTheEnemy(card, i);
+                                System.out.println("NORMAL");
+                                cardPlayed = true;
+                            }
                             break;
                         }
                     }
                 }
 
-//                for (int i = 0; i < machinePlayer.getCardsPlayer().size(); i++) {
-//                    Card card = machinePlayer.getCardsPlayer().get(i);
-//                    if (currentCard == null || card.isCompatible(currentCard)) {
-//                        table.addCardOnTheTable(card);
-//                        tableImageView.setImage(card.getImage());
-//                        machinePlayer.removeCard(i);
-//                        currentCard = card;
-//                        changeBackgroundColor(currentCard);
-//                        currentCard.printColor();
-//                        cardPlayed = true;
-//                        putCardOnTheTable(card);
-//                        break;
-//                    }
-//                }
-
-                // If no compatible card could be played, take a new card
                 if (!cardPlayed) {
                     System.out.println("La máquina no puede jugar una carta compatible y necesita tomar una nueva carta.");
                 }
@@ -101,6 +100,23 @@ public class ThreadPlayMachine extends Thread {
                 }
             }
         }
+    }
+
+    private void playTheEnemy(Card card, int i){
+        table.addCardOnTheTable(card);
+        tableImageView.setImage(card.getImage());
+        machinePlayer.removeCard(i);
+        currentCard = card;
+        changeBackgroundColor(currentCard);
+        currentCard.printColor();
+        putCardOnTheTable(card);
+    }
+
+    private String chooseRandomColor() {
+        String[] colors = {"RED", "GREEN", "BLUE", "YELLOW"}; // Ejemplo de colores disponibles
+        Random random = new Random();
+        int index = random.nextInt(colors.length);
+        return colors[index];
     }
 
     public interface MachinePlayCallback {
@@ -120,7 +136,6 @@ public class ThreadPlayMachine extends Thread {
         } else {
             cardColor = currentCard.getColor();
         }
-        System.out.println("color de la ultima carta: " + cardColor);
         switch (cardColor) {
             case "GREEN":
                 colorCircle.setStyle("-fx-fill: #54a954");
