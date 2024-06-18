@@ -8,7 +8,7 @@ package org.example.eiscuno.model.unoenum;
 public enum EISCUnoEnum {
     FAVICON("favicon.png"),
     UNO("images/uno.png"),
-    BACKGROUND_UNO("images/background_uno.png"),
+    BACKGROUND_UNO("images/background_effects1_uno.png"),
     BUTTON_UNO("images/button_uno.png"),
     CARD_UNO("cards-uno/card_uno.png"),
     DECK_OF_CARDS("cards-uno/deck_of_cards.png"),
@@ -19,7 +19,7 @@ public enum EISCUnoEnum {
     RED_TWO_WILD_DRAW("cards-uno/2_wild_draw_red.png"),
     FOUR_WILD_DRAW("cards-uno/4_wild_draw.png"),
     BLUE_SKIP("cards-uno/skip_blue.png"),
-    YELLOW_SKIP_("cards-uno/skip_yellow.png"),
+    YELLOW_SKIP("cards-uno/skip_yellow.png"),
     GREEN_SKIP("cards-uno/skip_green.png"),
     RED_SKIP("cards-uno/skip_red.png"),
     BLUE_RESERVE("cards-uno/reserve_blue.png"),

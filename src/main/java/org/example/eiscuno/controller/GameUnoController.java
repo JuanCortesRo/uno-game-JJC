@@ -1,10 +1,17 @@
 package org.example.eiscuno.controller;
 
+import javafx.animation.ScaleTransition;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
+import javafx.scene.control.Button;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.GridPane;
+import javafx.scene.layout.*;
+import javafx.scene.shape.Circle;
+import javafx.util.Duration;
 import org.example.eiscuno.model.card.Card;
 import org.example.eiscuno.model.deck.Deck;
 import org.example.eiscuno.model.game.GameUno;
@@ -13,19 +20,31 @@ import org.example.eiscuno.model.machine.ThreadSingUNOMachine;
 import org.example.eiscuno.model.player.Player;
 import org.example.eiscuno.model.table.Table;
 
+import java.util.Objects;
+
+import static org.example.eiscuno.model.unoenum.EISCUnoEnum.CARD_UNO;
+import static org.example.eiscuno.model.unoenum.EISCUnoEnum.BACKGROUND_UNO;
+
 /**
  * Controller class for the Uno game.
  */
-public class GameUnoController {
-
+public class GameUnoController implements ThreadPlayMachine.MachinePlayCallback {
+    @FXML
+    private Pane gamePane;
+    @FXML
+    private Pane centerPane;
     @FXML
     private GridPane gridPaneCardsMachine;
-
     @FXML
     private GridPane gridPaneCardsPlayer;
-
     @FXML
     private ImageView tableImageView;
+    @FXML
+    private Button exitButton;
+    @FXML
+    private Button cardsButton;
+    @FXML
+    private Circle colorCircle;
 
     private Player humanPlayer;
     private Player machinePlayer;
@@ -44,13 +63,20 @@ public class GameUnoController {
         initVariables();
         this.gameUno.startGame();
         printCardsHumanPlayer();
+        printCardsMachine();
+        setupGridPane();
 
         threadSingUNOMachine = new ThreadSingUNOMachine(this.humanPlayer.getCardsPlayer());
         Thread t = new Thread(threadSingUNOMachine, "ThreadSingUNO");
         t.start();
 
-        threadPlayMachine = new ThreadPlayMachine(this.table, this.machinePlayer, this.tableImageView);
+        threadPlayMachine = new ThreadPlayMachine(this.table, this.machinePlayer, this.tableImageView, this.gamePane, this.colorCircle, this);
         threadPlayMachine.start();
+
+        cardsButton.setOnMouseEntered(event -> nodeZoom(true,cardsButton,1.1));
+        cardsButton.setOnMouseExited(event -> nodeZoom(false,cardsButton,1.1));
+        exitButton.setOnMouseEntered(event -> nodeZoom(true,exitButton, 1.2));
+        exitButton.setOnMouseExited(event -> nodeZoom(false,exitButton,1.2));
     }
 
     /**
@@ -76,22 +102,150 @@ public class GameUnoController {
             Card card = currentVisibleCardsHumanPlayer[i];
             ImageView cardImageView = card.getCard();
 
+            cardImageView.setOnMouseEntered(event -> nodeZoom(true,cardImageView,1.2));
+            cardImageView.setOnMouseExited(event -> nodeZoom(false,cardImageView,1.2));
+
             cardImageView.setOnMouseClicked((MouseEvent event) -> {
                 // Aqui deberian verificar si pueden en la tabla jugar esa carta
-                if (threadPlayMachine.getCurrentCard() == null || threadPlayMachine.getCurrentCard().isCompatible(card)) {
-                    gameUno.playCard(card);
-                    tableImageView.setImage(card.getImage());
-                    humanPlayer.removeCard(findPosCardsHumanPlayer(card));
-                    threadPlayMachine.setHasPlayerPlayed(true);
-                    threadPlayMachine.setCurrentCard(card);
-                    card.printColor();
-                    printCardsHumanPlayer();
-                } else {
-                    System.out.println("No puedes jugar esta carta.");
+                if (Objects.equals(card.getValue(), "EAT4")) {
+                    addChangeColorButtons(card);
+                    System.out.println("EN ESTE MOMENTO EL ENEMIGO DEBERÍA DE COMER 4");
+                } else if (Objects.equals(card.getValue(), "NEWCOLOR")) {
+                    addChangeColorButtons(card);
+                    System.out.println("EN ESTE MOMENTO DEBERÍA CAMBIAR DE COLOR");
+                } else if (card.getValue() != null && card.getColor() != null) {
+                    if (threadPlayMachine.getCurrentCard() == null || threadPlayMachine.getCurrentCard().isCompatible(card)) {
+                        if (Objects.equals(card.getValue(), "EAT2")) {
+                            playWithThe(card);
+                            System.out.println("EN ESTE MOMENTO EL ENEMIGO DEBERÍA DE COMER 2");
+                        } else if (Objects.equals(card.getValue(), "REVERSE")) {
+                            playWithThe(card);
+                            System.out.println("EN EL JUEGO CAMBIA DE SENTIDO");
+                        } else if (Objects.equals(card.getValue(), "SKIP")) {
+                            playWithThe(card);
+                            System.out.println("EN ESTE MOMENTO EL ENEMIGO PIERDE TURNO");
+                        } else {
+                            playWithThe(card);
+                            System.out.println("NUMERO");
+                        }
+                    } else {
+                        System.out.println("No puedes jugar esta carta.");
+                    }
                 }
             });
 
             this.gridPaneCardsPlayer.add(cardImageView, i, 0);
+        }
+    }
+
+    @Override
+    public void onMachinePlayed() {
+        Platform.runLater(this::printCardsMachine);
+        nodeZoom(false,tableImageView, 1.2);
+    }
+
+    private void playWithThe(Card card) {
+        gameUno.playCard(card);
+        tableImageView.setImage(card.getImage());
+        nodeZoom(false,tableImageView, 1.2);
+        humanPlayer.removeCard(findPosCardsHumanPlayer(card));
+        threadPlayMachine.setHasPlayerPlayed(true);
+        threadPlayMachine.setCurrentCard(card);
+        threadPlayMachine.changeBackgroundColor(card);
+        card.printColor();
+        printCardsHumanPlayer();
+    }
+
+    private void setButtonProps(Button button, int layoutX, int layoutY, String color, int rotation){
+        button.setPrefSize(80, 80);
+        button.setLayoutX(layoutX);
+        button.setLayoutY(layoutY);
+        button.setStyle("-fx-background-radius: 5 5 40 5; -fx-background-color: "+color+";-fx-rotate: "+rotation);
+    }
+
+    private void addChangeColorButtons(Card card) {
+        Button redButton = new Button();
+        Button blueButton = new Button();
+        Button yellowButton = new Button();
+        Button greenButton = new Button();
+        setButtonProps(redButton, 49,0, "#ff3737",180);
+        setButtonProps(blueButton, 134,0, "#5252fe",270);
+        setButtonProps(yellowButton, 49,85, "#ffbd39",90);
+        setButtonProps(greenButton, 134,85, "#54a954",0);
+
+        // Event handlers for each button
+        redButton.setOnMouseClicked(event -> {
+            card.setColor("RED");
+            centerPane.getChildren().removeAll(redButton, yellowButton, greenButton, blueButton);
+            playWithThe(card);
+        });
+
+        yellowButton.setOnMouseClicked(event -> {
+            card.setColor("YELLOW");
+            centerPane.getChildren().removeAll(redButton, yellowButton, greenButton, blueButton);
+            playWithThe(card);
+        });
+
+        greenButton.setOnMouseClicked(event -> {
+            card.setColor("GREEN");
+            centerPane.getChildren().removeAll(redButton, yellowButton, greenButton, blueButton);
+            playWithThe(card);
+        });
+
+        blueButton.setOnMouseClicked(event -> {
+            card.setColor("BLUE");
+            centerPane.getChildren().removeAll(redButton, yellowButton, greenButton, blueButton);
+            playWithThe(card);
+        });
+
+        // Add buttons to the centerPane
+        centerPane.getChildren().addAll(redButton, yellowButton, greenButton, blueButton);
+    }
+
+    private void printCardsMachine() {
+        this.gridPaneCardsMachine.getChildren().clear();
+        Card[] currentVisibleCardsMachinePlayer = this.machinePlayer.getCardsPlayer().toArray(new Card[0]);
+
+        for (int i = 0; i < currentVisibleCardsMachinePlayer.length; i++) {
+            Card card = currentVisibleCardsMachinePlayer[i];
+            //ImageView machineCardImageView = card.getCard();
+            ImageView machineCardImageView = new ImageView(new Image(String.valueOf(getClass().getResource(CARD_UNO.getFilePath()))));
+            machineCardImageView.setFitHeight(110);
+            machineCardImageView.setFitWidth(74);
+
+            this.gridPaneCardsMachine.add(machineCardImageView, i, 0);
+        }
+    }
+
+    private void setupGridPane() {
+        int numColumns = machinePlayer.getCardsPlayer().size()+1;
+        double columnWidth = numColumns*2;
+
+        for (int i = 0; i < numColumns; i++) {
+            ColumnConstraints column = new ColumnConstraints();
+            column.setPrefWidth(columnWidth);
+            column.setMinWidth(columnWidth);
+            column.setMaxWidth(columnWidth);
+            gridPaneCardsMachine.getColumnConstraints().add(column);
+        }
+    }
+
+    /**
+     * Controls the zoom animation of a node
+     */
+    private void nodeZoom(boolean doZoom, Node node,double to){
+        ScaleTransition translateIn = new ScaleTransition(Duration.seconds(0.2), node);
+        translateIn.setToX(to);
+        translateIn.setToY(to);
+        ScaleTransition translateOut = new ScaleTransition(Duration.seconds(0.2), node);
+        translateOut.setFromY(to);
+        translateOut.setFromX(to);
+        translateOut.setToX(1);
+        translateOut.setToY(1);
+        if (doZoom){
+            translateIn.play();
+        }else {
+            translateOut.play();
         }
     }
 
@@ -144,6 +298,17 @@ public class GameUnoController {
     @FXML
     void onHandleTakeCard(ActionEvent event) {
         // Implement logic to take a card here
+    }
+
+    /**
+     * Handles the action of close the game.
+     *
+     * @param event the action event
+     */
+    @FXML
+    void onHandleExit(ActionEvent event) {
+        Platform.exit();
+        System.exit(0);
     }
 
     /**

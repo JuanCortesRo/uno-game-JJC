@@ -35,8 +35,8 @@ public class Card {
     private ImageView createCardImageView() {
         ImageView card = new ImageView(this.image);
         card.setY(16);
-        card.setFitHeight(90);
-        card.setFitWidth(70);
+        card.setFitHeight(110);
+        card.setFitWidth(74);
         return card;
     }
 
@@ -67,8 +67,38 @@ public class Card {
     }
 
     public boolean isCompatible(Card other) {
-        return this.color.equals(other.getColor()) || this.value == other.getValue();
+        if (this.color != null && this.value != null) { //numeros
+            if (this.color.equals(other.getColor()) || this.value.equals(other.getValue())) {
+                return true;
+            } else {
+                return false;
+            }
+        } else if (this.color != null && this.value == null) {
+            if (other.getValue()==null){
+                if (this.color.equals(other.getColor())){
+                return true;
+                } else {
+                return true;
+                }
+            } else if (other.getValue()!=null) {
+                if (this.color.equals(other.getColor())){
+                    return true;
+                } else {
+                    return false;
+                }
+            }else {
+                return false;
+            }
+        }
+        else {
+            return false;
+        }
     }
+
+    public void setColor(String newColor){
+        this.color = newColor;
+    }
+
     public void printColor(){
         System.out.println(getColor()+getValue());
     }
