@@ -29,9 +29,9 @@ public class Deck {
                     cardEnum.name().startsWith("YELLOW_") ||
                     cardEnum.name().startsWith("BLUE_") ||
                     cardEnum.name().startsWith("RED_") ||
-//                    cardEnum.name().startsWith("SKIP_") ||
-//                    cardEnum.name().startsWith("RESERVE_") ||
-//                    cardEnum.name().startsWith("TWO_WILD_DRAW_") ||
+                    cardEnum.name().startsWith("SKIP_") ||
+                    cardEnum.name().startsWith("RESERVE_") ||
+                    cardEnum.name().startsWith("TWO_WILD_DRAW_") ||
                     cardEnum.name().equals("FOUR_WILD_DRAW") ||
                     cardEnum.name().equals("WILD")) {
                 Card card = new Card(cardEnum.getFilePath(), getCardValue(cardEnum.name()), getCardColor(cardEnum.name()));
@@ -62,6 +62,16 @@ public class Deck {
             return "8";
         } else if (name.endsWith("9")){
             return "9";
+        } else if (name.endsWith("TWO_WILD_DRAW")) {
+            return "EAT2";//comer 2
+        } else if (name.endsWith("WILD")) {
+            return "NEWCOLOR";//cambiar color
+        } else if (name.endsWith("RESERVE")) {
+            return "REVERSE"; //reverse card
+        } else if (name.endsWith("SKIP")) {
+            return "SKIP";//bloquear turno
+        } else if (name.endsWith("FOUR_WILD_DRAW")) {
+            return "EAT4"; //comer 4
         } else {
             return null;
         }
