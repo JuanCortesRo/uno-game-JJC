@@ -1,10 +1,19 @@
 package org.example.eiscuno.controller;
 
+import javafx.animation.*;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.control.Button;
+import javafx.scene.effect.ColorAdjust;
+import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.GridPane;
+import javafx.scene.layout.*;
+import javafx.scene.shape.Circle;
+import javafx.util.Duration;
 import org.example.eiscuno.model.card.Card;
 import org.example.eiscuno.model.deck.Deck;
 import org.example.eiscuno.model.game.GameUno;
@@ -13,19 +22,32 @@ import org.example.eiscuno.model.machine.ThreadSingUNOMachine;
 import org.example.eiscuno.model.player.Player;
 import org.example.eiscuno.model.table.Table;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+import static org.example.eiscuno.model.unoenum.EISCUnoEnum.CARD_UNO;
+
 /**
  * Controller class for the Uno game.
  */
-public class GameUnoController {
-
+public class GameUnoController implements ThreadPlayMachine.MachinePlayCallback {
+    @FXML
+    private Pane gamePane;
+    @FXML
+    private Pane centerPane;
     @FXML
     private GridPane gridPaneCardsMachine;
-
     @FXML
     private GridPane gridPaneCardsPlayer;
-
     @FXML
     private ImageView tableImageView;
+    @FXML
+    private Button exitButton;
+    @FXML
+    private Button cardsButton;
+    @FXML
+    private Circle colorCircle;
 
     private Player humanPlayer;
     private Player machinePlayer;
@@ -33,25 +55,33 @@ public class GameUnoController {
     private Table table;
     private GameUno gameUno;
     private int posInitCardToShow;
-
     private ThreadSingUNOMachine threadSingUNOMachine;
     private ThreadPlayMachine threadPlayMachine;
+    private List<ImageView> playerCardImageViews = new ArrayList<>();
 
     /**
      * Initializes the controller.
      */
     @FXML
     public void initialize() {
+        System.out.println("- - - - - TURNO JUGADOR - - - - -");
         initVariables();
         this.gameUno.startGame();
         printCardsHumanPlayer();
+        printCardsMachine();
+        setupGridPane();
 
         threadSingUNOMachine = new ThreadSingUNOMachine(this.humanPlayer.getCardsPlayer());
         Thread t = new Thread(threadSingUNOMachine, "ThreadSingUNO");
         t.start();
 
-        threadPlayMachine = new ThreadPlayMachine(this.table, this.machinePlayer, this.tableImageView);
+        threadPlayMachine = new ThreadPlayMachine(this.table, this.machinePlayer, this.tableImageView, this.gamePane, this.colorCircle, this);
         threadPlayMachine.start();
+
+        cardsButton.setOnMouseEntered(event -> nodeZoom(true,cardsButton,1.1));
+        cardsButton.setOnMouseExited(event -> nodeZoom(false,cardsButton,1.1));
+        exitButton.setOnMouseEntered(event -> nodeZoom(true,exitButton, 1.2));
+        exitButton.setOnMouseExited(event -> nodeZoom(false,exitButton,1.2));
     }
 
     /**
@@ -77,17 +107,294 @@ public class GameUnoController {
             Card card = currentVisibleCardsHumanPlayer[i];
             ImageView cardImageView = card.getCard();
 
+            cardImageView.setOnMouseEntered(event -> nodeZoom(true,cardImageView,1.2));
+            cardImageView.setOnMouseExited(event -> nodeZoom(false,cardImageView,1.2));
+
             cardImageView.setOnMouseClicked((MouseEvent event) -> {
                 // Aqui deberian verificar si pueden en la tabla jugar esa carta
-                gameUno.playCard(card);
-                tableImageView.setImage(card.getImage());
-                humanPlayer.removeCard(findPosCardsHumanPlayer(card));
-                threadPlayMachine.setHasPlayerPlayed(true);
-                printCardsHumanPlayer();
+                if (Objects.equals(card.getValue(), "EAT4")) {
+                    addChangeColorButtons(card);
+                    System.out.println("EN ESTE MOMENTO EL ENEMIGO DEBERÍA DE COMER 4");
+                } else if (Objects.equals(card.getValue(), "NEWCOLOR")) {
+                    addChangeColorButtons(card);
+                    System.out.println("EN ESTE MOMENTO DEBERÍA CAMBIAR DE COLOR");
+                } else if (card.getValue() != null && card.getColor() != null) {
+                    if (threadPlayMachine.getCurrentCard() == null || threadPlayMachine.getCurrentCard().isCompatible(card)) {
+                        if (Objects.equals(card.getValue(), "EAT2")) {
+                            playWithThe(card);
+                            System.out.println("EN ESTE MOMENTO EL ENEMIGO DEBERÍA DE COMER 2");
+                        } else if (Objects.equals(card.getValue(), "REVERSE")) {
+                            playWithThe(card);
+                            System.out.println("EN EL JUEGO CAMBIA DE SENTIDO");
+                        } else if (Objects.equals(card.getValue(), "SKIP")) {
+                            playWithThe(card);
+                            System.out.println("EN ESTE MOMENTO EL ENEMIGO PIERDE TURNO");
+                        } else {
+                            playWithThe(card);
+                            System.out.println("NORMAL");
+                        }
+                    } else {
+                        System.out.println("No puedes jugar esta carta.");
+                    }
+                }
             });
-
+            playerCardImageViews.add(cardImageView);
             this.gridPaneCardsPlayer.add(cardImageView, i, 0);
         }
+    }
+
+    /**
+     * Disable all player card images.
+     */
+    private void disablePlayerCards() {
+        for (ImageView imageView : playerCardImageViews) {
+            imageView.setDisable(true);
+            nodeZoom(true,imageView,0.95);
+            applyLowContrastEffect(imageView);
+        }
+    }
+
+    /**
+     * Enable all player card images.
+     */
+    @Override
+    public void enablePlayerCards() {
+        for (ImageView imageView : playerCardImageViews) {
+            imageView.setDisable(false);
+            nodeZoom(true,imageView,1);
+            clearEffects(imageView);
+        }
+    }
+
+    /**
+     * Applies a low contrast effect to the given node.
+     * @param node The node to apply the contrast effect to.
+     */
+    public static void applyLowContrastEffect(Node node) {
+        // Create a ColorAdjust object to adjust contrast
+        ColorAdjust colorAdjust = new ColorAdjust();
+        colorAdjust.setContrast(-0.5); // Use a negative value to reduce contrast
+
+        // Apply the ColorAdjust effect to the node
+        node.setEffect(colorAdjust);
+    }
+
+    /**
+     * Clears any effects applied to the node.
+     * @param node The node to clear the effect from.
+     */
+    public static void clearEffects(Node node) {
+        // Remove any effects from the node
+        node.setEffect(null);
+    }
+
+    @Override
+    public void onMachinePlayed() {
+        Platform.runLater(this::printCardsMachine);
+        nodeZoom(false,tableImageView, 1.2);
+        setupGridPane();
+        System.out.println("- - - - - TURNO JUGADOR - - - - -");
+    }
+
+    private void playWithThe(Card card) {
+        gameUno.playCard(card);
+        tableImageView.setImage(card.getImage());
+        nodeZoom(false,tableImageView, 1.2);
+        humanPlayer.removeCard(findPosCardsHumanPlayer(card));
+        threadPlayMachine.setHasPlayerPlayed(true);
+        threadPlayMachine.setCurrentCard(card);
+        threadPlayMachine.changeBackgroundColor(card);
+        card.printColor();
+        printCardsHumanPlayer();
+        disablePlayerCards();
+        playWaveTranslateAnimation(gridPaneCardsMachine, Duration.seconds(0.5),20);
+    }
+
+    private void setButtonProps(Button button, int layoutX, int layoutY, String color, int rotation){
+        button.setPrefSize(80, 80);
+        button.setLayoutX(layoutX);
+        button.setLayoutY(layoutY);
+        button.setStyle("-fx-background-radius: 5 5 60 5; -fx-background-color: "+color+";-fx-rotate: "+rotation);
+    }
+
+    private void addChangeColorButtons(Card card) {
+        disablePlayerCards();
+        Button redButton = new Button();
+        Button blueButton = new Button();
+        Button yellowButton = new Button();
+        Button greenButton = new Button();
+        setButtonProps(redButton, 49,0, "#ff3737",180);
+        setButtonProps(blueButton, 134,0, "#5252fe",270);
+        setButtonProps(yellowButton, 49,85, "#ffbd39",90);
+        setButtonProps(greenButton, 134,85, "#54a954",0);
+        colorButtonsAnimations(true,redButton,blueButton,yellowButton,greenButton);
+
+        redButton.setOnMouseClicked(event -> {
+            card.setColor("RED");
+            playWithThe(card);
+            colorButtonsAnimations(false,redButton,blueButton,yellowButton,greenButton);
+        });
+
+        yellowButton.setOnMouseClicked(event -> {
+            card.setColor("YELLOW");
+            playWithThe(card);
+            colorButtonsAnimations(false,redButton,blueButton,yellowButton,greenButton);
+
+        });
+
+        greenButton.setOnMouseClicked(event -> {
+            card.setColor("GREEN");
+            playWithThe(card);
+            colorButtonsAnimations(false,redButton,blueButton,yellowButton,greenButton);
+        });
+
+        blueButton.setOnMouseClicked(event -> {
+            card.setColor("BLUE");
+            playWithThe(card);
+            colorButtonsAnimations(false,redButton,blueButton,yellowButton,greenButton);
+        });
+
+        // Add buttons to the centerPane
+        centerPane.getChildren().addAll(redButton, yellowButton, greenButton, blueButton);
+    }
+
+    private void printCardsMachine() {
+        this.gridPaneCardsMachine.getChildren().clear();
+        Card[] currentVisibleCardsMachinePlayer = this.machinePlayer.getCardsPlayer().toArray(new Card[0]);
+        this.gridPaneCardsMachine.setAlignment(Pos.CENTER);
+
+        for (int i = 0; i < currentVisibleCardsMachinePlayer.length; i++) {
+            Card card = currentVisibleCardsMachinePlayer[i];
+            //ImageView machineCardImageView = card.getCard();
+            ImageView machineCardImageView = new ImageView(new Image(String.valueOf(getClass().getResource(CARD_UNO.getFilePath()))));
+            machineCardImageView.setTranslateX(-(currentVisibleCardsMachinePlayer.length/0.75));
+
+            machineCardImageView.setFitHeight(110);
+            machineCardImageView.setFitWidth(74);
+
+            StackPane stackPane = new StackPane(machineCardImageView);
+            stackPane.setAlignment(Pos.CENTER);
+
+            this.gridPaneCardsMachine.add(stackPane, i, 0);
+        }
+    }
+
+    private void setupGridPane() {
+        int numColumns = machinePlayer.getCardsPlayer().size();
+        double gridPaneWidth = 353;
+        double columnWidth = gridPaneWidth / numColumns;
+
+        gridPaneCardsMachine.setPrefWidth(gridPaneWidth);
+        gridPaneCardsMachine.setMinWidth(gridPaneWidth);
+        gridPaneCardsMachine.setMaxWidth(gridPaneWidth);
+
+        gridPaneCardsMachine.getColumnConstraints().clear();
+
+        for (int i = 0; i < numColumns; i++) {
+            ColumnConstraints column = new ColumnConstraints();
+            column.setPrefWidth(columnWidth);
+            column.setMinWidth(columnWidth);
+            column.setMaxWidth(columnWidth);
+            gridPaneCardsMachine.getColumnConstraints().add(column);
+        }
+    }
+
+    /**
+     * Controls the zoom animation of a node
+     */
+    private void nodeZoom(boolean doZoom, Node node,double to){
+        ScaleTransition translateIn = new ScaleTransition(Duration.seconds(0.2), node);
+        translateIn.setToX(to);
+        translateIn.setToY(to);
+        ScaleTransition translateOut = new ScaleTransition(Duration.seconds(0.2), node);
+        translateOut.setFromY(to);
+        translateOut.setFromX(to);
+        translateOut.setToX(1);
+        translateOut.setToY(1);
+        if (doZoom){
+            translateIn.play();
+        }else {
+            translateOut.play();
+        }
+    }
+
+    /**
+     * Controls the animations of the colors selection for the +4 and wild card
+     */
+    private void colorButtonsAnimations(boolean isEnter, Button... buttons) {
+        SequentialTransition sequentialTransition  = new SequentialTransition();
+
+        for (Button button : buttons) {
+            ScaleTransition scaleTransition = new ScaleTransition(Duration.seconds(0.15), button);
+            ScaleTransition scaleTransition1 = new ScaleTransition(Duration.seconds(0.05),button);
+
+            if (isEnter) {
+                scaleTransition.setFromX(0);
+                scaleTransition.setFromY(0);
+                scaleTransition.setToX(1.2);
+                scaleTransition.setToY(1.2);
+                scaleTransition1.setFromX(1.2);
+                scaleTransition1.setFromY(1.2);
+                scaleTransition1.setToX(1);
+                scaleTransition1.setToY(1);
+            } else {
+                scaleTransition.setFromX(1);
+                scaleTransition.setFromY(1);
+                scaleTransition.setToX(0);
+                scaleTransition.setToY(0);
+                scaleTransition.setOnFinished(event -> {
+                    centerPane.getChildren().remove(button);
+                });
+            }
+
+            sequentialTransition.getChildren().addAll(scaleTransition, scaleTransition1);
+        }
+
+        sequentialTransition.play();
+    }
+
+    /**
+     * Controls the animation of the machineGridPane when it's the Machine turn
+     */
+    public static void playWaveTranslateAnimation(GridPane gridPane, Duration duration, double translateY) {
+        ParallelTransition parallelTransition = new ParallelTransition();
+        Duration delayBetweenAnimations = duration.divide(4);  // Ajuste del retraso para crear el solapamiento
+
+        // Primera mitad: de izquierda a derecha
+        for (int row = 0; row < gridPane.getRowCount(); row++) {
+            for (int col = 0; col < gridPane.getColumnCount(); col++) {
+                Node node = getNodeFromGridPane(gridPane, col, row);
+                if (node != null) {
+                    SequentialTransition translateWithOverlap = createTranslateTransitionWithOverlap(node, duration, translateY);
+                    translateWithOverlap.setDelay(delayBetweenAnimations.multiply(row * gridPane.getColumnCount() + col));  // Ajustar el retraso para cada nodo
+                    parallelTransition.getChildren().add(translateWithOverlap);
+                }
+            }
+        }
+        parallelTransition.setCycleCount(Animation.INDEFINITE);  // Configurar la animación para que se repita indefinidamente
+        parallelTransition.play();
+    }
+
+    private static SequentialTransition createTranslateTransitionWithOverlap(Node node, Duration duration, double translateY) {
+        TranslateTransition translateDown = new TranslateTransition(duration.divide(2), node);
+        translateDown.setByY(translateY);
+
+        TranslateTransition translateUp = new TranslateTransition(duration.divide(2), node);
+        translateUp.setByY(-translateY);
+
+        SequentialTransition translateWithOverlap = new SequentialTransition();
+        translateWithOverlap.getChildren().addAll(translateDown, translateUp);
+
+        return translateWithOverlap;
+    }
+
+    private static Node getNodeFromGridPane(GridPane gridPane, int col, int row) {
+        for (Node node : gridPane.getChildren()) {
+            if (GridPane.getColumnIndex(node) == col && GridPane.getRowIndex(node) == row) {
+                return node;
+            }
+        }
+        return null;
     }
 
     /**
@@ -139,6 +446,17 @@ public class GameUnoController {
     @FXML
     void onHandleTakeCard(ActionEvent event) {
         // Implement logic to take a card here
+    }
+
+    /**
+     * Handles the action of close the game.
+     *
+     * @param event the action event
+     */
+    @FXML
+    void onHandleExit(ActionEvent event) {
+        Platform.exit();
+        System.exit(0);
     }
 
     /**

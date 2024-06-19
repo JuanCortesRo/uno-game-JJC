@@ -62,6 +62,16 @@ public class Deck {
             return "8";
         } else if (name.endsWith("9")){
             return "9";
+        } else if (name.endsWith("TWO_WILD_DRAW")) {
+            return "EAT2";//comer 2
+        } else if (name.endsWith("WILD")) {
+            return "NEWCOLOR";//cambiar color
+        } else if (name.endsWith("RESERVE")) {
+            return "REVERSE"; //reverse card
+        } else if (name.endsWith("SKIP")) {
+            return "SKIP";//bloquear turno
+        } else if (name.endsWith("FOUR_WILD_DRAW")) {
+            return "EAT4"; //comer 4
         } else {
             return null;
         }

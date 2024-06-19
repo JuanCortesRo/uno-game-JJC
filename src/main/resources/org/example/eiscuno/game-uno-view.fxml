@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
+<?import javafx.scene.effect.Glow?>
+<?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
@@ -9,73 +10,132 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0" prefWidth="600.0" style="-fx-background-color: orange;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.eiscuno.controller.GameUnoController">
-   <left>
-      <Pane prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
-         <children>
-            <Button layoutX="50.0" layoutY="30.0" mnemonicParsing="false" onAction="#onHandleTakeCard" prefHeight="149.0" prefWidth="100.0" text="Baraja" />
-         </children>
-      </Pane>
-   </left>
-   <right>
-      <Pane prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
-         <children>
-            <Button layoutX="50.0" layoutY="75.0" mnemonicParsing="false" onAction="#onHandleUno" prefHeight="50.0" prefWidth="100.0" text="UNO" />
-         </children>
-      </Pane>
-   </right>
-   <center>
-      <Pane prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
-         <children>
-            <ImageView fx:id="tableImageView" fitHeight="149.0" fitWidth="100.0" layoutX="50.0" layoutY="30.0" pickOnBounds="true" preserveRatio="true" />
-         </children>
-      </Pane>
-   </center>
-   <top>
-      <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="10.0" BorderPane.alignment="CENTER">
-         <children>
-            <Label text="EISC Uno" textFill="RED">
-               <font>
-                  <Font name="Berlin Sans FB Bold" size="18.0" />
-               </font>
-            </Label>
-            <GridPane fx:id="gridPaneCardsMachine">
-              <columnConstraints>
-                <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                  <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                  <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-              </columnConstraints>
-               <rowConstraints>
-                  <RowConstraints />
-               </rowConstraints>
-            </GridPane>
-            <Button mnemonicParsing="false" text="Salir" />
-         </children>
-      </HBox>
-   </top>
-   <bottom>
-      <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" BorderPane.alignment="CENTER">
-         <children>
-            <Button mnemonicParsing="false" onAction="#onHandleBack" prefWidth="74.0" style="-fx-background-color: red;" text="Anterior" textFill="WHITE">
-               <font>
-                  <Font name="Berlin Sans FB" size="12.0" />
-               </font></Button>
-            <GridPane fx:id="gridPaneCardsPlayer">
-              <columnConstraints>
-                <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                  <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                  <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-                <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
-              </columnConstraints>
-              <rowConstraints>
-                <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
-              </rowConstraints>
-            </GridPane>
-            <Button mnemonicParsing="false" onAction="#onHandleNext" prefWidth="74.0" style="-fx-background-color: RED;" text="Siguiente" textFill="WHITE" />
-         </children>
-      </HBox>
-   </bottom>
-</BorderPane>
+<Pane fx:id="gamePane" style="-fx-background-color: grey;" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.example.eiscuno.controller.GameUnoController">
+   <children>
+      <Circle fx:id="colorCircle" fill="#e5e5e500" layoutX="400.0" layoutY="250.0" radius="12.0" stroke="RED" strokeType="INSIDE" strokeWidth="0.0" />
+      <ImageView fitHeight="500.0" fitWidth="800.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@images/background_effects1_uno.png" />
+         </image>
+         <effect>
+            <Glow level="1.0" />
+         </effect>
+      </ImageView>
+      <ImageView fitHeight="500.0" fitWidth="800.0" pickOnBounds="true" preserveRatio="true">
+         <image>
+            <Image url="@images/background_effects2_uno.png" />
+         </image>
+      </ImageView>
+      <BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="800.0">
+         <left>
+            <Pane prefHeight="250.0" prefWidth="270.0" BorderPane.alignment="CENTER">
+               <children>
+                  <Button fx:id="cardsButton" layoutX="98.0" layoutY="28.0" maxHeight="1.7976931348623157E308" maxWidth="1.7976931348623157E308" mnemonicParsing="false" onAction="#onHandleTakeCard" prefHeight="158.0" prefWidth="107.0" rotate="9.8" style="-fx-background-color: TRANSPARENT;">
+                     <graphic>
+                        <ImageView fitHeight="150.0" fitWidth="129.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@cards-uno/deck_of_cards.png" />
+                           </image>
+                        </ImageView>
+                     </graphic></Button>
+               </children>
+            </Pane>
+         </left>
+         <right>
+            <Pane prefHeight="250.0" prefWidth="270.0" BorderPane.alignment="CENTER">
+               <children>
+                  <Button alignment="CENTER" disable="true" layoutY="89.0" mnemonicParsing="false" onAction="#onHandleUno" prefHeight="80.0" prefWidth="154.0" style="-fx-background-color: TRANSPARENT;">
+                     <graphic>
+                        <ImageView fitHeight="91.0" fitWidth="227.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@images/uno_button.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
+               </children>
+            </Pane>
+         </right>
+         <center>
+            <Pane fx:id="centerPane" prefHeight="202.0" prefWidth="365.0" BorderPane.alignment="CENTER">
+               <children>
+                  <ImageView fx:id="tableImageView" fitHeight="120.0" fitWidth="84.0" layoutX="88.0" layoutY="22.0" pickOnBounds="true" preserveRatio="true" />
+               </children>
+            </Pane>
+         </center>
+         <top>
+            <HBox alignment="BOTTOM_CENTER" prefHeight="172.0" prefWidth="827.0" spacing="45.0" BorderPane.alignment="TOP_LEFT">
+               <children>
+                  <ImageView fitHeight="146.0" fitWidth="171.0" pickOnBounds="true" preserveRatio="true">
+                     <image>
+                        <Image url="@images/left_deco.png" />
+                     </image>
+                  </ImageView>
+                  <GridPane fx:id="gridPaneCardsMachine" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="126.0" prefWidth="353.0" translateY="-31.0">
+                    <columnConstraints>
+                        <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                        <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                        <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                        <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                      <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                    </columnConstraints>
+                     <rowConstraints>
+                        <RowConstraints />
+                     </rowConstraints>
+                  </GridPane>
+                  <Button fx:id="exitButton" mnemonicParsing="false" onAction="#onHandleExit" prefHeight="139.0" prefWidth="120.0" style="-fx-background-color: TRANSPARENT;">
+                     <graphic>
+                        <ImageView fitHeight="131.0" fitWidth="158.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@images/exit_button.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
+               </children>
+            </HBox>
+         </top>
+         <bottom>
+            <HBox alignment="CENTER" prefHeight="125.0" prefWidth="800.0" BorderPane.alignment="CENTER">
+               <children>
+                  <Button alignment="CENTER" mnemonicParsing="false" onAction="#onHandleBack" prefHeight="94.0" prefWidth="0.0" style="-fx-background-color: TRANSPARENT;" textFill="WHITE">
+                     <font>
+                        <Font name="Berlin Sans FB" size="12.0" />
+                     </font>
+                     <graphic>
+                        <ImageView fitHeight="86.0" fitWidth="51.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@images/left_search.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
+                  <GridPane fx:id="gridPaneCardsPlayer" prefHeight="126.0" prefWidth="353.0">
+                    <columnConstraints>
+                      <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                        <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                        <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                      <ColumnConstraints halignment="CENTER" hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+                    </columnConstraints>
+                    <rowConstraints>
+                      <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+                    </rowConstraints>
+                  </GridPane>
+                  <Button alignment="CENTER" mnemonicParsing="false" onAction="#onHandleNext" prefHeight="94.0" prefWidth="44.0" style="-fx-background-color: TRANSPARENT;" textFill="WHITE">
+                     <graphic>
+                        <ImageView fitHeight="86.0" fitWidth="51.0" pickOnBounds="true" preserveRatio="true">
+                           <image>
+                              <Image url="@images/right_search.png" />
+                           </image>
+                        </ImageView>
+                     </graphic>
+                  </Button>
+               </children>
+            </HBox>
+         </bottom>
+      </BorderPane>
+   </children>
+</Pane>
