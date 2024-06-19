@@ -1,8 +1,13 @@
 package org.example.eiscuno.model.machine;
 
+import javafx.animation.FadeTransition;
 import javafx.animation.ScaleTransition;
+import javafx.animation.SequentialTransition;
+import javafx.animation.TranslateTransition;
+import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.Circle;
 import javafx.util.Duration;
@@ -41,11 +46,12 @@ public class ThreadPlayMachine extends Thread {
         while (true){
             if(hasPlayerPlayed){
                 try{
-                    Thread.sleep(2000);
+                    Thread.sleep(3000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
                 System.out.println("- - - - - TURNO MAQUINA - - - - -");
+
                 // Aquí iría la lógica de colocar la carta
                 boolean cardPlayed = false;
                 for (int i = 0; i < machinePlayer.getCardsPlayer().size(); i++) {
@@ -93,6 +99,8 @@ public class ThreadPlayMachine extends Thread {
                     System.out.println("La máquina no puede jugar una carta compatible y necesita tomar una nueva carta.");
                 }
 
+                callback.enablePlayerCards();
+
                 hasPlayerPlayed = false;
 
                 if (callback != null) {
@@ -121,6 +129,7 @@ public class ThreadPlayMachine extends Thread {
 
     public interface MachinePlayCallback {
         void onMachinePlayed();
+        void enablePlayerCards();
     }
 
     public void changeBackgroundColor(Card currentCard) {
@@ -176,6 +185,9 @@ public class ThreadPlayMachine extends Thread {
             }
         });
     }
+
+
+
 
     private void putCardOnTheTable(Card card){
         table.addCardOnTheTable(card);

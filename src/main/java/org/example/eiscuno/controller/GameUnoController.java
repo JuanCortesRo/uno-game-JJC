@@ -1,14 +1,13 @@
 package org.example.eiscuno.controller;
 
-import javafx.animation.ParallelTransition;
-import javafx.animation.ScaleTransition;
-import javafx.animation.SequentialTransition;
+import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.effect.ColorAdjust;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -23,6 +22,8 @@ import org.example.eiscuno.model.machine.ThreadSingUNOMachine;
 import org.example.eiscuno.model.player.Player;
 import org.example.eiscuno.model.table.Table;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 import static org.example.eiscuno.model.unoenum.EISCUnoEnum.CARD_UNO;
@@ -56,6 +57,7 @@ public class GameUnoController implements ThreadPlayMachine.MachinePlayCallback 
     private int posInitCardToShow;
     private ThreadSingUNOMachine threadSingUNOMachine;
     private ThreadPlayMachine threadPlayMachine;
+    private List<ImageView> playerCardImageViews = new ArrayList<>();
 
     /**
      * Initializes the controller.
@@ -136,9 +138,54 @@ public class GameUnoController implements ThreadPlayMachine.MachinePlayCallback 
                     }
                 }
             });
-
+            playerCardImageViews.add(cardImageView);
             this.gridPaneCardsPlayer.add(cardImageView, i, 0);
         }
+    }
+
+    /**
+     * Disable all player card images.
+     */
+    private void disablePlayerCards() {
+        for (ImageView imageView : playerCardImageViews) {
+            imageView.setDisable(true);
+            nodeZoom(true,imageView,0.95);
+            applyLowContrastEffect(imageView);
+        }
+    }
+
+    /**
+     * Enable all player card images.
+     */
+    @Override
+    public void enablePlayerCards() {
+        for (ImageView imageView : playerCardImageViews) {
+            imageView.setDisable(false);
+            nodeZoom(true,imageView,1);
+            clearEffects(imageView);
+        }
+    }
+
+    /**
+     * Applies a low contrast effect to the given node.
+     * @param node The node to apply the contrast effect to.
+     */
+    public static void applyLowContrastEffect(Node node) {
+        // Create a ColorAdjust object to adjust contrast
+        ColorAdjust colorAdjust = new ColorAdjust();
+        colorAdjust.setContrast(-0.5); // Use a negative value to reduce contrast
+
+        // Apply the ColorAdjust effect to the node
+        node.setEffect(colorAdjust);
+    }
+
+    /**
+     * Clears any effects applied to the node.
+     * @param node The node to clear the effect from.
+     */
+    public static void clearEffects(Node node) {
+        // Remove any effects from the node
+        node.setEffect(null);
     }
 
     @Override
@@ -159,6 +206,8 @@ public class GameUnoController implements ThreadPlayMachine.MachinePlayCallback 
         threadPlayMachine.changeBackgroundColor(card);
         card.printColor();
         printCardsHumanPlayer();
+        disablePlayerCards();
+        playWaveTranslateAnimation(gridPaneCardsMachine, Duration.seconds(0.5),20);
     }
 
     private void setButtonProps(Button button, int layoutX, int layoutY, String color, int rotation){
@@ -169,6 +218,7 @@ public class GameUnoController implements ThreadPlayMachine.MachinePlayCallback 
     }
 
     private void addChangeColorButtons(Card card) {
+        disablePlayerCards();
         Button redButton = new Button();
         Button blueButton = new Button();
         Button yellowButton = new Button();
@@ -301,6 +351,50 @@ public class GameUnoController implements ThreadPlayMachine.MachinePlayCallback 
         }
 
         sequentialTransition.play();
+    }
+
+    /**
+     * Controls the animation of the machineGridPane when it's the Machine turn
+     */
+    public static void playWaveTranslateAnimation(GridPane gridPane, Duration duration, double translateY) {
+        ParallelTransition parallelTransition = new ParallelTransition();
+        Duration delayBetweenAnimations = duration.divide(4);  // Ajuste del retraso para crear el solapamiento
+
+        // Primera mitad: de izquierda a derecha
+        for (int row = 0; row < gridPane.getRowCount(); row++) {
+            for (int col = 0; col < gridPane.getColumnCount(); col++) {
+                Node node = getNodeFromGridPane(gridPane, col, row);
+                if (node != null) {
+                    SequentialTransition translateWithOverlap = createTranslateTransitionWithOverlap(node, duration, translateY);
+                    translateWithOverlap.setDelay(delayBetweenAnimations.multiply(row * gridPane.getColumnCount() + col));  // Ajustar el retraso para cada nodo
+                    parallelTransition.getChildren().add(translateWithOverlap);
+                }
+            }
+        }
+        parallelTransition.setCycleCount(Animation.INDEFINITE);  // Configurar la animación para que se repita indefinidamente
+        parallelTransition.play();
+    }
+
+    private static SequentialTransition createTranslateTransitionWithOverlap(Node node, Duration duration, double translateY) {
+        TranslateTransition translateDown = new TranslateTransition(duration.divide(2), node);
+        translateDown.setByY(translateY);
+
+        TranslateTransition translateUp = new TranslateTransition(duration.divide(2), node);
+        translateUp.setByY(-translateY);
+
+        SequentialTransition translateWithOverlap = new SequentialTransition();
+        translateWithOverlap.getChildren().addAll(translateDown, translateUp);
+
+        return translateWithOverlap;
+    }
+
+    private static Node getNodeFromGridPane(GridPane gridPane, int col, int row) {
+        for (Node node : gridPane.getChildren()) {
+            if (GridPane.getColumnIndex(node) == col && GridPane.getRowIndex(node) == row) {
+                return node;
+            }
+        }
+        return null;
     }
 
     /**
